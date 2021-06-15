@@ -126,3 +126,32 @@ for i in 5 x.push i
 size := x.size // 5
 ```
 # resolvers
+resolvers are (in my opinion) what makes frost so powerful. they allow you to edit the actual source code at compile time. say you wanted to create a macro to add a function to a struct but you don't want to type out the entire function, use a resolver!
+
+```
+@serialisable
+person : type struct {
+    name : string = "default_name"
+}
+```
+the above resolver, at compile time, will take the source code for the person struct, and add another function to it called 'serialise'. lets create a simple resolver to add a hello method to a struct
+
+```
+hello : pub fn (expression : ast) ast {
+    // first check we have a struct
+    if s := expression.to_type().struct(); s {
+        s.methods.push(
+            parse("
+                hello : pub fn (this) {
+                    println("hello from {}", s.name)
+                }
+            ")
+        )
+    }
+    return expression
+}
+
+@hello
+person : type struct {}
+```
+note, this is why using parenthesis in function calls is important. For resolvers, single statements are passed into the resolvers unless parenthesis as specified. so for the above example, the entire person struct (a definition statement) is passed in and nothing else
